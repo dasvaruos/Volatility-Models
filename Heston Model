@@ -1,0 +1,37 @@
+#Simple Heston Model
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters
+S0 = 100
+v0 = 0.04
+r = 0.05
+kappa = 2
+theta = 0.04
+sigma = 0.3
+rho = -0.7
+T = 1
+N = 252
+dt = T/N
+
+S = np.zeros(N)
+v = np.zeros(N)
+
+S[0] = S0
+v[0] = v0
+
+for t in range(1, N):
+    z1 = np.random.normal()
+    z2 = rho*z1 + np.sqrt(1-rho**2)*np.random.normal()
+    
+    v[t] = abs(v[t-1] + kappa*(theta - v[t-1])*dt + sigma*np.sqrt(v[t-1])*np.sqrt(dt)*z2)
+    S[t] = S[t-1] * np.exp((r - 0.5*v[t-1])*dt + np.sqrt(v[t-1]*dt)*z1)
+
+plt.plot(S)
+plt.title("Heston Model Stock Price Path")
+plt.show()
+
+plt.plot(v)
+plt.title("Variance Path")
+plt.show()
