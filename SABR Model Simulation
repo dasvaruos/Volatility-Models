@@ -1,0 +1,35 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters
+T = 1.0
+N = 252
+dt = T / N
+
+F0 = 100
+alpha0 = 0.2
+beta = 0.5
+nu = 0.4
+rho = -0.3
+
+# Arrays
+F = np.zeros(N)
+alpha = np.zeros(N)
+
+F[0] = F0
+alpha[0] = alpha0
+
+# Simulation
+for t in range(1, N):
+    Z1 = np.random.normal()
+    Z2 = rho * Z1 + np.sqrt(1 - rho**2) * np.random.normal()
+    
+    alpha[t] = alpha[t-1] + nu * alpha[t-1] * np.sqrt(dt) * Z2
+    F[t] = F[t-1] + alpha[t-1] * (F[t-1]**beta) * np.sqrt(dt) * Z1
+
+# Plot
+plt.plot(F, label="Forward Price")
+plt.plot(alpha, label="Volatility")
+plt.legend()
+plt.title("SABR Simulation")
+plt.show()
