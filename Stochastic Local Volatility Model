@@ -1,0 +1,60 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters
+T = 1
+N = 252
+dt = T/N
+
+S0 = 100
+V0 = 0.04
+
+kappa = 2
+theta = 0.04
+xi = 0.5
+rho = -0.5
+
+S = np.zeros(N)
+V = np.zeros(N)
+
+S[0] = S0
+V[0] = V0
+
+def local_vol(S):
+    return 0.2 + 0.3*((S-100)/100)**2
+
+for t in range(1, N):
+    Z1 = np.random.normal()
+    Z2 = rho*Z1 + np.sqrt(1-rho**2)*np.random.normal()
+
+    # Ensure variance remains non-negative
+    V[t] = max(0, V[t-1] + kappa*(theta - V[t-1])*dt + xi*np.sqrt(max(V[t-1],0))*np.sqrt(dt)*Z2)
+
+    sigma = local_vol(S[t-1])
+    S[t] = S[t-1] + sigma*np.sqrt(max(V[t-1],0))*S[t-1]*np.sqrt(dt)*Z1
+
+plt.plot(S, label="Price")
+plt.plot(np.sqrt(V), label="Volatility")
+plt.legend()
+plt.title("SLV Simulation")
+plt.show()
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+# Create the figure and a 3D axis
+fig = plt.figure(figsize=(12, 10))
+ax = fig.add_subplot(111, projection='3d')
+
+# Create a time array for the x-axis
+time_array = np.arange(N) * dt
+
+# Plot the 3D line for S and sqrt(V) over time
+ax.plot(time_array, S, np.sqrt(V), label='SLV Path (S, sqrt(V) over Time)')
+
+# Add labels and title
+ax.set_xlabel('Time (T)')
+ax.set_ylabel('Stock Price (S)')
+ax.set_zlabel('Volatility (sqrt(V))')
+ax.set_title('3D SLV Path Simulation')
+ax.legend()
+plt.show()
