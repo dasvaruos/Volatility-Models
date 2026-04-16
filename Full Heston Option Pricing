@@ -1,0 +1,84 @@
+#Full Heston Option Pricing
+
+import numpy as np
+
+# Parameters
+S0 = 100
+K = 100
+r = 0.05
+T = 1
+v0 = 0.04
+kappa = 2
+theta = 0.04
+sigma = 0.3
+rho = -0.7
+
+N = 252
+M = 10000
+dt = T/N
+
+payoffs = []
+
+for i in range(M):
+    S = S0
+    v = v0
+    
+    for t in range(N):
+        z1 = np.random.normal()
+        z2 = rho*z1 + np.sqrt(1-rho**2)*np.random.normal()
+        
+        v = abs(v + kappa*(theta - v)*dt + sigma*np.sqrt(v*dt)*z2)
+        S = S * np.exp((r - 0.5*v)*dt + np.sqrt(v*dt)*z1)
+    
+    payoffs.append(max(S - K, 0))
+
+call_price = np.exp(-r*T) * np.mean(payoffs)
+
+print("Heston Call Price:", call_price)
+
+#Calibration of Heston Model
+
+import numpy as np
+from scipy.optimize import minimize
+
+def heston_price(params):
+    kappa, theta, sigma, rho, v0 = params
+    
+    simulated_prices = []
+    M = 2000 # Number of simulations for each strike price
+
+    # Generate all random numbers needed for all M paths for all N time steps at once
+    # Shape: (M, N) for each z1 and z2
+    z1_matrix = np.random.normal(size=(M, N))
+    z2_matrix = rho * z1_matrix + np.sqrt(1 - rho**2) * np.random.normal(size=(M, N))
+
+    for K_val in strikes: # Renamed K to K_val to avoid conflict with placeholder K
+        # Initialize S and v for all M paths for the current K_val
+        S_paths = np.full(M, S0)
+        v_paths = np.full(M, v0)
+
+        # Loop through time steps
+        for t in range(N): 
+            # Vectorized updates for all M paths
+            v_paths = abs(v_paths + kappa * (theta - v_paths) * dt + sigma * np.sqrt(v_paths) * np.sqrt(dt) * z2_matrix[:, t])
+            S_paths = S_paths * np.exp((r - 0.5 * v_paths) * dt + np.sqrt(v_paths) * np.sqrt(dt) * z1_matrix[:, t])
+
+        # Calculate payoffs for the current K_val
+        payoffs_for_K = np.maximum(S_paths - K_val, 0)
+        price = np.exp(-r * T) * np.mean(payoffs_for_K)
+        simulated_prices.append(price)
+    
+    return np.array(simulated_prices)
+
+def objective(params):
+    model_prices = heston_price(params)
+    return np.sum((model_prices - market_prices)**2)
+
+# Placeholder for market data for calibration
+strikes = np.array([90, 100, 110]) # Example strike prices
+market_prices = np.array([14.0, 7.5, 3.0]) # Example observed market call option prices
+
+initial_guess = [1, 0.03, 0.2, -0.3, 0.03]
+
+result = minimize(objective, initial_guess, method='Nelder-Mead')
+print("Calibrated Parameters:", result.x)
